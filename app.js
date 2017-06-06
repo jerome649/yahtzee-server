@@ -171,7 +171,7 @@ playerScore.prototype.updateScore = function() {
 yahtzeeBoard = function() {
   console.log("Creating a new yahtzee party !");
   this.scores = [new playerScore('Jerome'), new playerScore('Olivier')];
-  this.player = Math.random() > 0.5 ? "Jerome" : "Oliver";
+  this.player = Math.random() > 0.5 ? "Jerome" : "Olivier";
   this.dices = [0, 0, 0, 0, 0];
   this.launchDices(this.player, []);
   this.attempt = 2;
@@ -199,17 +199,22 @@ function randomIntFromInterval(min,max)
 }
 
 yahtzeeBoard.prototype.launchDices = function(user, keep) {
-  if (user.toLowerCase() != this.player.toLowerCase() || this.attempt == 0) { return; }
+  if (user.toLowerCase() != this.player.toLowerCase() || this.attempt == 0) {
+    return;
+  }
+
   var playerScore = this.getPlayerScore();
 
   for (var i = 0; i < 5; i++) {
+    console.log(i);
     if (keep.indexOf(i) == -1) {
       this.dices[i] = randomIntFromInterval(1, 6);
     }
   }
 
-  playerScore.computedEstimates(this.dices.sort());
+  playerScore.computedEstimates(this.dices.concat().sort());
   this.attempt -= 1;
+  console.log(this.dices);
 }
 
 yahtzeeBoard.prototype.validate = function(user, playedItem) {
@@ -245,7 +250,6 @@ app.get('/currentParty', function (req, res) {
 })
 
 app.post('/throw', function (req, res) {
-  console.log(req.body.user);
   currentParty.launchDices(req.body.user, req.body.keeps);
   res.json({"data": "ok"})
 })
