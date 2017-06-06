@@ -1,3 +1,5 @@
+var port = process.env.PORT || 3000;
+
 var express = require('express')
 var bodyParser = require('body-parser');
 
@@ -254,4 +256,4 @@ app.post('/throw', function (req, res) {
   res.json({"data": "ok"})
 })
 
-app.listen(3000);
+app.listen(port);
