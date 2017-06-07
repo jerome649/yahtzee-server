@@ -101,7 +101,8 @@ doublePairComputer.prototype.compute = function(dices) {
   return 0;
 }
 
-itemScore = function(computer) {
+itemScore = function(name, computer) {
+  this.name = name;
   this.done = false;
   this.score = 0;
   this.estimated = 0;
@@ -110,21 +111,21 @@ itemScore = function(computer) {
 
 playerScore = function(name) {
   this.name = name;
-  this.ones = new itemScore(new singleComputer(1));
-  this.twos = new itemScore(new singleComputer(2));
-  this.threes = new itemScore(new singleComputer(3));
-  this.fours = new itemScore(new singleComputer(4));
-  this.fives = new itemScore(new singleComputer(5));
-  this.sixes = new itemScore(new singleComputer(6));
-  this.pair = new itemScore(new sameComputer(2));
-  this.doublePair = new itemScore(new doublePairComputer());
-  this.threeOfAKind = new itemScore(new sameComputer(3));
-  this.fourOfAKind = new itemScore(new sameComputer(4));
-  this.smallStraight = new itemScore(new straightComputer(1));
-  this.largeStraight = new itemScore(new straightComputer(2));
-  this.fullHouse = new itemScore(new fullHouseComputer());
-  this.chance = new itemScore(new chanceComputer());
-  this.yahtzee = new itemScore(new yahtzeeComputer());
+  this.ones = new itemScore("ones", new singleComputer(1));
+  this.twos = new itemScore("twos", new singleComputer(2));
+  this.threes = new itemScore("threes", new singleComputer(3));
+  this.fours = new itemScore("fours", new singleComputer(4));
+  this.fives = new itemScore("fives", new singleComputer(5));
+  this.sixes = new itemScore("sixes", new singleComputer(6));
+  this.pair = new itemScore("pair", new sameComputer(2));
+  this.doublePair = new itemScore("doublePair", new doublePairComputer());
+  this.threeOfAKind = new itemScore("threeOfAKind", new sameComputer(3));
+  this.fourOfAKind = new itemScore("fourOfAKind", new sameComputer(4));
+  this.smallStraight = new itemScore("smallStraight", new straightComputer(1));
+  this.largeStraight = new itemScore("largeStraight", new straightComputer(2));
+  this.fullHouse = new itemScore("fullHouse", new fullHouseComputer());
+  this.chance = new itemScore("chance", new chanceComputer());
+  this.yahtzee = new itemScore("yahtzee", new yahtzeeComputer());
   this.singles = [
     this.ones,
     this.twos,
@@ -185,6 +186,8 @@ yahtzeeBoard.prototype.switchUser = function() {
   } else {
     this.player = this.scores[0].name;
   }
+  this.attempt = 3;
+  this.launchDices(this.player, []);
 }
 
 yahtzeeBoard.prototype.getPlayerScore = function() {
@@ -208,7 +211,6 @@ yahtzeeBoard.prototype.launchDices = function(user, keep) {
   var playerScore = this.getPlayerScore();
 
   for (var i = 0; i < 5; i++) {
-    console.log(i);
     if (keep.indexOf(i) == -1) {
       this.dices[i] = randomIntFromInterval(1, 6);
     }
@@ -216,17 +218,17 @@ yahtzeeBoard.prototype.launchDices = function(user, keep) {
 
   playerScore.computedEstimates(this.dices.concat().sort());
   this.attempt -= 1;
-  console.log(this.dices);
 }
 
 yahtzeeBoard.prototype.validate = function(user, playedItem) {
   if (user.toLowerCase() != this.player.toLowerCase()) { return; }
-  var item = this.getPlayerScore()[playedItem];
+  var playerScore = this.getPlayerScore();
+  var item = playerScore[playedItem];
   if (item.done) { return; }
 
   item.done = true;
   item.score = item.estimated;
-  item.updateScore();
+  playerScore.updateScore();
 
   this.switchUser();
 }
@@ -242,17 +244,22 @@ app.use(function(req, res, next) {
 app.use(bodyParser.json());
 
 app.get('/ping', function (req, res) {
-  console.log("received a ping " + res);
+  console.log("received a ping");
   res.json({'message': 'Connected to yahtzee web api'});
 })
 
 app.get('/currentParty', function (req, res) {
-  console.log("received a request for current party " + res);
+  console.log("received a request for current party");
   res.json(currentParty);
 })
 
 app.post('/throw', function (req, res) {
   currentParty.launchDices(req.body.user, req.body.keeps);
+  res.json({"data": "ok"})
+})
+
+app.post('/validate', function (req, res) {
+  currentParty.validate(req.body.user, req.body.playedItem);
   res.json({"data": "ok"})
 })
 
