@@ -2,8 +2,21 @@ var port = process.env.PORT || 3000;
 
 var express = require('express')
 var bodyParser = require('body-parser');
+var http = require('http');
+var WebSocket = require('ws');
 
 var app = express()
+
+var server = http.createServer(app);
+var wss = new WebSocket.Server({ server });
+
+function broadcast(data) {
+  wss.clients.forEach(function each(client) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(data));
+    }
+  });
+}
 
 singleComputer = function(number) {
   this.number = number;
@@ -255,12 +268,16 @@ app.get('/currentParty', function (req, res) {
 
 app.post('/throw', function (req, res) {
   currentParty.launchDices(req.body.user, req.body.keeps);
+  broadcast(currentParty);
   res.json({"data": "ok"})
 })
 
 app.post('/validate', function (req, res) {
   currentParty.validate(req.body.user, req.body.playedItem);
+  broadcast(currentParty);
   res.json({"data": "ok"})
 })
 
-app.listen(port);
+server.listen(port, function listening() {
+  console.log('Listening on %d', server.address().port);
+});
