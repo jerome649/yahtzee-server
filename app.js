@@ -111,6 +111,9 @@ doublePairComputer.prototype.compute = function(dices) {
   if (dices[1] == dices[2] && dices[3] == dices[4]) {
     return 2 * (dices[1] + dices[3])
   }
+  if (dices[0] == dices[1] && dices[3] == dices[4]) {
+    return 2 * (dices[0] + dices[3])
+  }
   return 0;
 }
 
