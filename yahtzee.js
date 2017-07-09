@@ -167,10 +167,10 @@ playerScore.prototype.updateScore = function() {
   }
 }
 
-yahtzeeBoard = function() {
+yahtzeeBoard = function(user1, user2) {
   console.log("Creating a new yahtzee party !");
-  this.scores = [new playerScore('Jerome'), new playerScore('Olivier')];
-  this.player = Math.random() > 0.5 ? "Jerome" : "Olivier";
+  this.scores = [new playerScore(user1), new playerScore(user2)];
+  this.player = Math.random() > 0.5 ? this.scores[0].name : this.scores[1].name;
   this.dices = [0, 0, 0, 0, 0];
   this.launchDices(this.player, []);
   this.attempt = 2;
@@ -194,9 +194,8 @@ yahtzeeBoard.prototype.getPlayerScore = function() {
   }
 }
 
-function randomIntFromInterval(min,max)
-{
-    return Math.floor(Math.random()*(max-min+1)+min);
+function randomIntFromInterval(min,max) {
+  return Math.floor(Math.random()*(max-min+1)+min);
 }
 
 yahtzeeBoard.prototype.launchDices = function(user, keep) {

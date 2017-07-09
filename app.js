@@ -1,14 +1,20 @@
 var port = process.env.PORT || 3000;
 
-var express = require('express')
+var fs = require('fs');
+var express = require('express');
 var bodyParser = require('body-parser');
-var http = require('http');
+var https = require('https');
 var WebSocket = require('ws');
 var yahtzeeBoard = require('./yahtzee').yahtzeeBoard;
+var Authenticator = require('./authenticator').Authenticator;
 
 var app = express()
 
-var server = http.createServer(app);
+var server = https.createServer({
+      key: fs.readFileSync('./ssl/key.pem'),
+      cert: fs.readFileSync('./ssl/cert.pem')
+    }, app);
+
 var wss = new WebSocket.Server({ server });
 
 function broadcast(data) {
@@ -19,7 +25,8 @@ function broadcast(data) {
   });
 }
 
-currentParty = new yahtzeeBoard();
+var currentParty = new yahtzeeBoard(process.argv[2], process.argv[3]);
+var authenticator = new Authenticator();
 
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -40,15 +47,27 @@ app.get('/currentParty', function (req, res) {
 })
 
 app.post('/throw', function (req, res) {
-  currentParty.launchDices(req.body.user, req.body.keeps);
-  broadcast(currentParty);
-  res.json({"data": "ok"})
+  authenticator.validateToken(req.body.token, function(r, user) {
+    if (r) {
+      currentParty.launchDices(user, req.body.keeps);
+      broadcast(currentParty);
+      res.json({"data": "ok"});
+    } else {
+      res.json({"data": "not authorized"});
+    }
+  });
 })
 
 app.post('/validate', function (req, res) {
-  currentParty.validate(req.body.user, req.body.playedItem);
-  broadcast(currentParty);
-  res.json({"data": "ok"})
+  authenticator.validateToken(req.body.token, function(r, user) {
+    if (r) {
+      currentParty.validate(user, req.body.playedItem);
+      broadcast(currentParty);
+      res.json({"data": "ok"})
+    } else {
+      res.json({"data": "not authorized"});
+    }
+  });
 })
 
 server.listen(port, function listening() {
